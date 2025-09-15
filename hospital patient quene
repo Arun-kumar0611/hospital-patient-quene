@@ -1,0 +1,84 @@
+#include <iostream>
+#include <queue>
+#include <string>
+
+struct Patient {
+    std::string name;
+    int severity; // Higher number = more critical
+    int arrivalOrder;
+
+    Patient(std::string n, int s, int order) : name(n), severity(s), arrivalOrder(order) {}
+};
+
+// Compare critical patients by severity and arrival time
+struct CriticalCompare {
+    bool operator()(const Patient& a, const Patient& b) {
+        if (a.severity == b.severity)
+            return a.arrivalOrder > b.arrivalOrder;  // earlier arrival first
+        return a.severity < b.severity;  // higher severity first
+    }
+};
+
+class HospitalQueue {
+    std::priority_queue<Patient, std::vector<Patient>, CriticalCompare> criticalQueue;
+    std::queue<Patient> regularQueue;
+    int arrivalCount = 0;
+
+public:
+    void addPatient(const std::string& name, int severity) {
+        arrivalCount++;
+        Patient p(name, severity, arrivalCount);
+        if (severity >= 5) {  // critical threshold
+            criticalQueue.push(p);
+            std::cout << name << " added to critical queue.\n";
+        } else {
+            regularQueue.push(p);
+            std::cout << name << " added to regular queue.\n";
+        }
+    }
+
+    void processPatient() {
+        if (!criticalQueue.empty()) {
+            Patient p = criticalQueue.top();
+            criticalQueue.pop();
+            std::cout << "Processing critical patient: " << p.name << " Severity: " << p.severity << "\n";
+        } else if (!regularQueue.empty()) {
+            Patient p = regularQueue.front();
+            regularQueue.pop();
+            std::cout << "Processing regular patient: " << p.name << "\n";
+        } else {
+            std::cout << "No patients waiting.\n";
+        }
+    }
+
+    void showWaitTimes() {
+        int criticalWait = criticalQueue.size();
+        int regularWait = regularQueue.size();
+        std::cout << "Estimated wait times:\n";
+        std::cout << "Critical patients: " << criticalWait * 5 << " mins (approx)\n";
+        std::cout << "Regular patients: " << regularWait * 10 << " mins (approx)\n";
+    }
+};
+
+int main() {
+    HospitalQueue hospital;
+
+    hospital.addPatient("Alice", 7);
+    hospital.addPatient("Bob", 3);
+    hospital.addPatient("Charlie", 9);
+    hospital.addPatient("David", 2);
+
+    hospital.showWaitTimes();
+
+    hospital.processPatient();
+    hospital.processPatient();
+
+    hospital.showWaitTimes();
+
+    hospital.processPatient();
+    hospital.processPatient();
+
+    hospital.processPatient();
+
+    return 0;
+}
